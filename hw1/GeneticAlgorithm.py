@@ -17,23 +17,16 @@ def dec2bin2str(d):
 #################################################################
 '''
 maxIter     :  iteration times for GA
-popSize     :  number of initial gene combinition
+popSize     :  number of initial gene combinitions
 poolSize    :  capacity of the mating pool
-pop         :  list of initial gene combinition
-pool        :  list of competing gene combinition
-strLen      :  lenth of the gene combinition
-pMute       :  probability of mutation for each gene
+pop         :  list of initial gene combinitions
+pool        :  list of competing gene combinitions
+strLen      :  lenth of the a gene combinition
+pMute       :  probability of mutation for each genes
 
 '''
 class GeneticAlgorithm:
-    maxIter = int()
-    popSize = int()
-    poolSize = int()
-    pop = []
-    pool = []
-    strLen = int()
-    pMute = float()
-    
+
     def __init__(self, strLen, popSize=10, poolSize=100, maxIter=50, pMute = 0.01):
         self.strLen = strLen
         self.popSize = popSize
