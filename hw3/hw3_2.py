@@ -1,4 +1,7 @@
 import ParticleSworm as PS
+import random
+
+random.seed(1)
 
 def main():
     def f1(x):
@@ -7,9 +10,9 @@ def main():
 
     x = [[-2], [0], [1] ,[3]]
     
-    ps = PS.ParticleSworm(xLow=[-4], xUp=[4])
+    ps = PS.ParticleSworm(xLow=[-4], xUp=[4], showIter=True, iterTime=20)
     ps.evaluation = f1
     ps.fit(x)
-    ps.show()
+    ps.show('Result')
 
 main()
