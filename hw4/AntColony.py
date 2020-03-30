@@ -4,7 +4,13 @@ import numpy as np
 ###############             Utilities             ###############
 #################################################################
 
-def normSampling(x, n):
+# Roulette Wheel Selection
+# 1. input x is a vector of weight
+# 2. set each x to the power of a
+# 3. scale the vector by 1/sum(x)
+# 4. select n index by p(i) = x_i 
+def normSampling(x, n, a=1):
+    x = x**a
     div = sum(x)
     if div != 0:
         x = [i/div for i in x]
@@ -36,48 +42,61 @@ class AntPar:
 
 nPar        :   number of the ants
 graph       :   design graph
-graphWeight :   pheromone for each node of the design graph
-nLayer      :   number of the layer of the design graph
-par         :   list fro the ants
+graphWeight :   each node's pheromone in the design graph
+nLayer      :   number of layers in the design graph
+par         :   list of ants
 
 -------------------------- Parameters ---------------------------
 
 iterTime    :   iteration times
 show        :   show agents' information for each iteration
-eta         :   scaling parameter for update pheromone
-rho         :   evaporization parameter for pheromone
+eta         :   scaling parameter for pheromone  update
+rho         :   evaporization parameter of pheromone
+a           :   peremter of winner-take-all
 '''
 
 class AntColony:
 
-    def __init__(self, nPar, graph, iterTime=10, show=False, eta=2, rho=.5):
+    def __init__(self, nPar, graph, iterTime=10, show=False, eta=2, rho=.5, a=1):
+
+        ###################### Data Member ######################
         self.nPar = nPar
         self.graph = np.array([np.array(layer) for layer in graph])
         self.graphWeight = [np.ones_like(layer) for layer in graph]
         self.nLayer = len(self.graph)
         self.par = [AntPar(np.zeros(self.nLayer), i) for i in range(self.nPar)]
 
+        ###################### Parameters #######################
         assert(eta>=0)
         assert((rho>=0) & (rho<=1))
         self.iterTime = iterTime
         self.show = show
         self.eta = eta
         self.rho = rho
+        self.a = a
 
+    # User-Defined Objective Function
     def evalutation():
         raise Exception("Objective function not assigned")
 
+    # Initialize Particles' Path
     def setPar(self):
-        layerIndex = [normSampling(layer, self.nPar) for layer in self.graphWeight]
+        layerIndex = [normSampling(layer, self.nPar, self.a) for layer in self.graphWeight]
         layerIndex = np.array(layerIndex).T
         for i in range(self.nPar):
             self.par[i].xId = layerIndex[i]
     
+    # Evaluate Particles' Fitness Value
     def evalPar(self):
         for p in self.par:
             x = [layer[i] for i, layer in zip(p.xId, self.graph)]
             p.y = self.evalutation(x)
 
+    # Update Pheromone 
+    # 1. get values of best solutions and worst solutions
+    # 2. get index of best solutions
+    # 3. calculate delta of pheromone
+    # 4. add pheromone to best solutions' path 
     def setGraphWeight(self):
         bestS = max([p.y for p in self.par])
         worstS = min([p.y for p in self.par])
@@ -89,14 +108,17 @@ class AntColony:
             for i, xi in enumerate(self.par[bi].xId):
                 self.graphWeight[i][xi] += deltaW
 
+    # Evaporate Pheromone
     def evapGraphWeight(self):
         for layer in self.graphWeight:
             for node in layer:
                 node *= (1 - self.rho)
 
+    # Converge Judge
     def isNotConverge(self):
         return True
 
+    # Execute Finding Process
     def fit(self):
         iterTime = 0
         while self.isNotConverge() & (iterTime<self.iterTime):
@@ -107,12 +129,14 @@ class AntColony:
             self.evapGraphWeight()
             iterTime += 1
 
+    # Show Each Iteration's Information
     def showIter(self, iterTime):
         print('Iteration: {}'.format(iterTime))
         for p in self.par:
             retVal = [layer[i] for i, layer in zip(p.xId, self.graph)]
             print(retVal)
 
+    # Show The Resulting Best Solutions
     def showResult(self):
         resVal = max([p.y for p in self.par])
         resPar = [p.xId.tolist() for p in self.par if p.y == resVal]
