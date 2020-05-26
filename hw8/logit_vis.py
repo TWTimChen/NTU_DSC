@@ -1,5 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import log_loss
 
 def genData(N=200, p=10):
   x = np.zeros((N, p))
@@ -17,7 +19,7 @@ class LogisticReg:
   def __init__(self, tol=5e-6, step=0.05, max_iter=1e4, is_plot=True):
     self.parameters = {'tol': tol, 'step':step, 'max_iter':max_iter}
     self.is_plot = is_plot
-    self.plot = {'grad':[], 'loss':[]}
+    self.plot = {'grad':[], 'loss':[], 'index':[]}
 
   def predict(self):
     z = self.x.dot(self.b)
@@ -31,8 +33,7 @@ class LogisticReg:
 
   def getLoss(self):
     y_hat = self.predict()
-    loss = -self.y.dot(np.log(y_hat).T) -(1-self.y).dot(np.log(1-y_hat).T)
-    loss = loss/len(self.y)
+    loss = log_loss(self.y, y_hat)
     return loss
 
   def getPlot(self):
@@ -53,26 +54,35 @@ class LogisticReg:
       if(self.is_plot):
         self.plot['loss'].append(loss)
         self.plot['grad'].append(np.linalg.norm(grad))
-
+        self.plot['index'].append(n_iter)
 
 def main():
   x_train, y_train = genData()
-  reg = LogisticReg(step=1e-4)
+  
+  # from sklearn
+  reg = LogisticRegression(max_iter=1e4)
   reg.fit(x_train, y_train)
+  z = x_train.dot(reg.coef_.T)
+  y_hat = 1/(1+np.exp(-z))
+  loss = log_loss(y_train, y_hat)
 
-  plot = reg.getPlot()
-  index = np.arange(len(plot['grad']))
+  # my implementation
+  reg_mine = LogisticReg(step=1e-4)
+  reg_mine.fit(x_train, y_train)
+
+  # plot
+  plot = reg_mine.getPlot()
+  plot['loss'] = [ls-loss for ls in plot['loss']]
   plt.figure(figsize = (15,5))
   plt.subplot(1,2,1)
   plt.yscale('log')
-  plt.plot(index, plot['grad'])
+  plt.plot(plot['index'], plot['grad'])
   plt.xlabel('Iteration')
   plt.ylabel('gradient norm (log)')
   plt.subplot(1,2,2)
-  plt.yscale('log')
-  plt.plot(index, plot['loss'])
+  plt.plot(plot['index'], plot['loss'])
   plt.xlabel('Iteration')
-  plt.ylabel('loss (log)')
+  plt.ylabel('l(B^r) - l(B^*)')
   plt.show()
 
 if __name__ == '__main__':
